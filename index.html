@@ -530,6 +530,100 @@ body {
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
 
+/* ===== AI Analysis ===== */
+.ai-summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.ai-insight-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.ai-insight-icon { font-size: 32px; margin-bottom: 8px; }
+.ai-insight-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+.ai-insight-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+.ai-chart-wrap {
+  padding: 16px 24px 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 180px;
+  overflow-x: auto;
+}
+
+.ai-bar-col {
+  flex: 1;
+  min-width: 28px;
+  max-width: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.ai-bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+  min-height: 2px;
+  position: relative;
+}
+
+.ai-bar-val {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.ai-bar-day {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.ai-suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 24px;
+}
+.ai-suggestion-item:not(:last-child) { border-bottom: 1px solid var(--border); }
+
+.ai-suggestion-icon { font-size: 24px; flex-shrink: 0; width: 32px; text-align: center; }
+
+.ai-suggestion-body { flex: 1; }
+.ai-suggestion-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.ai-suggestion-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+
+.ai-compare-wrap {
+  padding: 16px 24px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.ai-compare-item { text-align: center; }
+.ai-compare-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+.ai-compare-amount { font-size: 20px; font-weight: 700; }
+.ai-compare-diff {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 2px;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   body { flex-direction: column; }
@@ -573,6 +667,12 @@ body {
     </button>
     <button class="nav-item" data-page="budget">
       <span class="nav-icon">&#128200;</span> 预算
+    </button>
+    <button class="nav-item" data-page="ai">
+      <span class="nav-icon">&#129302;</span> AI 分析
+    </button>
+    <button class="nav-item" data-page="feedback">
+      <span class="nav-icon">&#128172;</span> 反馈
     </button>
   </nav>
   <div class="sidebar-footer">Ledger v1.0 · 本地记账</div>
@@ -661,8 +761,64 @@ body {
         </div>
       </div>
     </div>
-  </div>
-</main>
+
+    <!-- AI Analysis Page -->
+    <div class="page" id="page-ai">
+      <div class="ai-summary-row" id="aiSummaryRow"></div>
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">每日消费趋势</span>
+          <span style="font-size:13px;color:var(--text-tertiary)" id="aiDayRange"></span>
+        </div>
+        <div class="ai-chart-wrap" id="aiDayChart"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">智能建议</span>
+        </div>
+        <div id="aiSuggestions"></div>
+      </div>
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">本周 vs 上周</span>
+        </div>
+        <div class="ai-compare-wrap" id="aiCompare"></div>
+      </div>
+    </div>
+
+    <!-- Feedback Page -->
+    <div class="page" id="page-feedback">
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">意见反馈</span>
+          <span style="font-size:12px;color:var(--text-tertiary)">我会在聊天中处理</span>
+        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">反馈类型</label>
+            <div class="type-toggle" id="feedbackTypeToggle">
+              <button type="button" class="type-btn active" data-ftype="bug" onclick="setFeedbackType('bug')">&#128030; 问题反馈</button>
+              <button type="button" class="type-btn" data-ftype="feature" onclick="setFeedbackType('feature')">&#128161; 功能建议</button>
+              <button type="button" class="type-btn" data-ftype="other" onclick="setFeedbackType('other')">&#128221; 其他</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">描述</label>
+            <textarea class="form-input note-input" id="feedbackText" placeholder="请描述你的想法…" style="height:120px;"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="clearFeedback()">清空</button>
+            <span style="flex:1;"></span>
+            <button class="btn btn-primary" onclick="saveFeedback()">保存反馈</button>
+            <button class="btn btn-secondary" onclick="copyFeedback()" id="copyFeedbackBtn" style="display:none;">&#128203; 复制到剪贴板</button>
+          </div>
+          <div id="feedbackHistory" style="margin-top:8px;"></div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--text-tertiary);padding:12px;">
+        复制反馈内容 → 粘贴到 Deep Copilot 聊天框 → 我收到后会立即修改
+      </div>
+    </div>
 
 <!-- Add/Edit Transaction Modal -->
 <div class="modal-overlay" id="modalOverlay">
@@ -774,6 +930,8 @@ document.querySelectorAll('.nav-item').forEach(function(btn) {
     if (currentPage === 'dashboard') renderDashboard();
     if (currentPage === 'transactions') renderTransactions();
     if (currentPage === 'budget') renderBudget();
+    if (currentPage === 'ai') renderAIAnalysis();
+    if (currentPage === 'feedback') renderFeedback();
   });
 });
 
@@ -1064,6 +1222,334 @@ function hashCode(s) {
   return h;
 }
 
+/* ===== AI ANALYSIS ===== */
+function renderAIAnalysis() {
+  renderAISummary();
+  renderDailyChart();
+  renderSuggestions();
+  renderWeekCompare();
+}
+
+function renderAISummary() {
+  var row = document.getElementById('aiSummaryRow');
+  var today = new Date().toISOString().slice(0, 10);
+  var todayTxns = transactions.filter(function(t) { return t.date === today; });
+  var todayExp = todayTxns.filter(function(t) { return t.type === 'expense'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var todayInc = todayTxns.filter(function(t) { return t.type === 'income'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+
+  // 7-day average
+  var weekTotals = [];
+  for (var i = 0; i < 7; i++) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var ds = d.toISOString().slice(0, 10);
+    var dayExp = transactions.filter(function(t) { return t.date === ds && t.type === 'expense'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+    weekTotals.push(dayExp);
+  }
+  var avgDaily = weekTotals.reduce(function(s, v) { return s + v; }, 0) / 7;
+
+  // Most expensive category this month
+  var monthTxns = getMonthTxns().filter(function(t) { return t.type === 'expense'; });
+  var byCat = {};
+  monthTxns.forEach(function(t) { byCat[t.category] = (byCat[t.category] || 0) + t.amount; });
+  var topCat = '无';
+  var topAmt = 0;
+  Object.keys(byCat).forEach(function(k) {
+    if (byCat[k] > topAmt) { topAmt = byCat[k]; topCat = getCategoryName('expense', k); }
+  });
+
+  row.innerHTML =
+    '<div class="ai-insight-card">' +
+      '<div class="ai-insight-icon">&#128184;</div>' +
+      '<div class="ai-insight-value">' + formatCurrency(todayExp) + '</div>' +
+      '<div class="ai-insight-label">今日支出</div>' +
+    '</div>' +
+    '<div class="ai-insight-card">' +
+      '<div class="ai-insight-icon">&#128200;</div>' +
+      '<div class="ai-insight-value">' + formatCurrency(avgDaily) + '</div>' +
+      '<div class="ai-insight-label">近7日均消费</div>' +
+    '</div>' +
+    '<div class="ai-insight-card">' +
+      '<div class="ai-insight-icon">&#128293;</div>' +
+      '<div class="ai-insight-value" style="font-size:17px;">' + topCat + '</div>' +
+      '<div class="ai-insight-label">本月最大支出类别</div>' +
+    '</div>';
+}
+
+function renderDailyChart() {
+  var chart = document.getElementById('aiDayChart');
+  var range = document.getElementById('aiDayRange');
+
+  var days = [];
+  var maxExp = 0;
+  for (var i = 13; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var ds = d.toISOString().slice(0, 10);
+    var dayExp = transactions.filter(function(t) { return t.date === ds && t.type === 'expense'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+    if (dayExp > maxExp) maxExp = dayExp;
+    days.push({
+      date: ds,
+      label: (d.getMonth() + 1) + '/' + d.getDate(),
+      amount: dayExp
+    });
+  }
+
+  var today = new Date();
+  var twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(today.getDate() - 13);
+  range.textContent = (twoWeeksAgo.getMonth() + 1) + '/' + twoWeeksAgo.getDate() + ' - ' + (today.getMonth() + 1) + '/' + today.getDate();
+
+  if (maxExp === 0) {
+    chart.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-tertiary);font-size:14px;">近14天暂无支出数据</div>';
+    return;
+  }
+
+  chart.innerHTML = days.map(function(d) {
+    var h = maxExp > 0 ? Math.max((d.amount / maxExp) * 140, 2) : 0;
+    var isToday = d.date === today.toISOString().slice(0, 10);
+    return '<div class="ai-bar-col">' +
+      '<div class="ai-bar-val">' + (d.amount > 0 ? '\u00A5' + d.amount.toFixed(0) : '') + '</div>' +
+      '<div class="ai-bar" style="height:' + h + 'px;background:' + (isToday ? 'var(--accent)' : 'rgba(0,113,227,0.3)') + ';"></div>' +
+      '<div class="ai-bar-day" style="' + (isToday ? 'color:var(--accent);font-weight:700;' : '') + '">' + d.label + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderSuggestions() {
+  var container = document.getElementById('aiSuggestions');
+  var suggestions = [];
+
+  var monthExp = getMonthTxns().filter(function(t) { return t.type === 'expense'; });
+  var allExp = transactions.filter(function(t) { return t.type === 'expense'; });
+
+  // Analyze category concentration
+  var byCat = {};
+  monthExp.forEach(function(t) { byCat[t.category] = (byCat[t.category] || 0) + t.amount; });
+  var entries = Object.entries(byCat).sort(function(a, b) { return b[1] - a[1]; });
+  var totalExp = entries.reduce(function(s, e) { return s + e[1]; }, 0);
+
+  if (entries.length > 0) {
+    var top = entries[0];
+    var topPct = Math.round((top[1] / totalExp) * 100);
+    var topName = getCategoryName('expense', top[0]);
+    if (topPct >= 50) {
+      suggestions.push({
+        icon: '\uD83D\uDEA8',
+        title: topName + ' 占总支出的 ' + topPct + '%',
+        desc: '消费高度集中在「' + topName + '」上，建议关注是否需要控制此类支出。'
+      });
+    }
+  }
+
+  // Daily volatility
+  if (allExp.length >= 3) {
+    var dailyAmounts = {};
+    allExp.forEach(function(t) { dailyAmounts[t.date] = (dailyAmounts[t.date] || 0) + t.amount; });
+    var amounts = Object.values(dailyAmounts);
+    var avg = amounts.reduce(function(s, v) { return s + v; }, 0) / amounts.length;
+    var variance = amounts.reduce(function(s, v) { return s + (v - avg) * (v - avg); }, 0) / amounts.length;
+    var std = Math.sqrt(variance);
+    if (std > avg * 1.5 && amounts.length >= 5) {
+      suggestions.push({
+        icon: '\uD83D\uDCC8',
+        title: '消费波动较大',
+        desc: '日常支出标准差 ¥' + std.toFixed(0) + '，建议设定每日预算上限来平滑消费。'
+      });
+    }
+  }
+
+  // Recent trend (last 3 days vs previous 3)
+  if (allExp.length >= 6) {
+    var getLastDays = function(start, count) {
+      var sum = 0;
+      for (var i = start; i < start + count; i++) {
+        var d = new Date();
+        d.setDate(d.getDate() - i);
+        var ds = d.toISOString().slice(0, 10);
+        sum += allExp.filter(function(t) { return t.date === ds; }).reduce(function(s, t) { return s + t.amount; }, 0);
+      }
+      return sum;
+    };
+    var recent3 = getLastDays(0, 3);
+    var prev3 = getLastDays(3, 3);
+    if (recent3 > prev3 * 1.3 && prev3 > 0) {
+      suggestions.push({
+        icon: '\u2B06\uFE0F',
+        title: '近3天支出上涨 ' + Math.round((recent3 / prev3 - 1) * 100) + '%',
+        desc: '最近3天消费 ¥' + recent3.toFixed(0) + '，较前3天（¥' + prev3.toFixed(0) + '）明显增多。'
+      });
+    } else if (recent3 < prev3 * 0.7 && prev3 > 0) {
+      suggestions.push({
+        icon: '\u2B07\uFE0F',
+        title: '近3天支出下降 ' + Math.round((1 - recent3 / prev3) * 100) + '%',
+        desc: '最近控制得不错！继续保持节约势头。'
+      });
+    }
+  }
+
+  // Empty or no anomalies
+  if (suggestions.length === 0) {
+    if (totalExp === 0) {
+      suggestions.push({
+        icon: '\uD83D\uDC4B',
+        title: '欢迎使用 AI 分析',
+        desc: '记录几笔消费后，我会帮你分析消费模式、发现异常支出、给出省钱建议。'
+      });
+    } else {
+      suggestions.push({
+        icon: '\u2705',
+        title: '消费状态良好',
+        desc: '没有检测到明显的消费异常。支出分布均衡，继续保持！'
+      });
+    }
+  }
+
+  container.innerHTML = suggestions.map(function(s) {
+    return '<div class="ai-suggestion-item">' +
+      '<div class="ai-suggestion-icon">' + s.icon + '</div>' +
+      '<div class="ai-suggestion-body">' +
+        '<div class="ai-suggestion-title">' + s.title + '</div>' +
+        '<div class="ai-suggestion-desc">' + s.desc + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderWeekCompare() {
+  var container = document.getElementById('aiCompare');
+  var getWeekSum = function(offset) {
+    var sum = 0;
+    for (var i = 0; i < 7; i++) {
+      var d = new Date();
+      d.setDate(d.getDate() - offset * 7 - i);
+      var ds = d.toISOString().slice(0, 10);
+      sum += transactions.filter(function(t) { return t.date === ds && t.type === 'expense'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+    }
+    return sum;
+  };
+  var thisWeek = getWeekSum(0);
+  var lastWeek = getWeekSum(1);
+  var diff = thisWeek - lastWeek;
+  var diffPct = lastWeek > 0 ? Math.round((diff / lastWeek) * 100) : 0;
+  var arrow = diff > 0 ? '\u2191' : (diff < 0 ? '\u2193' : '\u2192');
+  var diffColor = diff > 0 ? 'var(--expense)' : (diff < 0 ? 'var(--income)' : 'var(--text-secondary)');
+  var diffBg = diff > 0 ? 'rgba(255,59,48,0.08)' : (diff < 0 ? 'rgba(52,199,89,0.08)' : 'rgba(0,0,0,0.04)');
+
+  container.innerHTML =
+    '<div class="ai-compare-item">' +
+      '<div class="ai-compare-label">本周（近7天）</div>' +
+      '<div class="ai-compare-amount expense">' + formatCurrency(thisWeek) + '</div>' +
+    '</div>' +
+    '<div class="ai-compare-item">' +
+      '<div class="ai-compare-label">上周</div>' +
+      '<div class="ai-compare-amount">' + formatCurrency(lastWeek) + '</div>' +
+      '<div class="ai-compare-diff" style="color:' + diffColor + ';background:' + diffBg + ';">' +
+        arrow + ' ' + formatCurrency(Math.abs(diff)) + ' (' + (diff >= 0 ? '+' : '') + diffPct + '%)' +
+      '</div>' +
+    '</div>';
+}
+
+/* ===== FEEDBACK ===== */
+var FEEDBACK_KEY = 'ledger_feedback';
+var feedbackType = 'bug';
+
+function setFeedbackType(type) {
+  feedbackType = type;
+  document.querySelectorAll('#feedbackTypeToggle .type-btn').forEach(function(b) {
+    b.classList.remove('active');
+    if (b.dataset.ftype === type) b.classList.add('active');
+  });
+}
+
+function getFeedbackList() {
+  try { return JSON.parse(localStorage.getItem(FEEDBACK_KEY)) || []; }
+  catch (e) { return []; }
+}
+
+function saveFeedbackList(list) {
+  localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
+}
+
+function saveFeedback() {
+  var text = document.getElementById('feedbackText').value.trim();
+  if (!text) { showToast('请输入反馈内容'); return; }
+
+  var list = getFeedbackList();
+  list.push({
+    id: generateId(),
+    type: feedbackType,
+    text: text,
+    time: new Date().toISOString()
+  });
+  saveFeedbackList(list);
+  document.getElementById('feedbackText').value = '';
+  showToast('已保存');
+  renderFeedback();
+}
+
+function copyFeedback() {
+  var list = getFeedbackList();
+  if (list.length === 0) { showToast('暂无反馈'); return; }
+
+  var typeNames = { bug: '问题反馈', feature: '功能建议', other: '其他' };
+  var text = list.map(function(f, i) {
+    var d = new Date(f.time);
+    return '[' + (i + 1) + '] ' + typeNames[f.type] + ' - ' + d.toLocaleString('zh-CN') + '\n' + f.text;
+  }).join('\n\n---\n\n');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('已复制到剪贴板');
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('已复制到剪贴板'); }
+  catch (e) { showToast('复制失败，请手动选择'); }
+  document.body.removeChild(ta);
+}
+
+function clearFeedback() {
+  if (!confirm('确定清空所有反馈吗？')) return;
+  localStorage.removeItem(FEEDBACK_KEY);
+  renderFeedback();
+  showToast('已清空');
+}
+
+function renderFeedback() {
+  var list = getFeedbackList();
+  var historyEl = document.getElementById('feedbackHistory');
+  var copyBtn = document.getElementById('copyFeedbackBtn');
+
+  if (list.length === 0) {
+    historyEl.innerHTML = '';
+    copyBtn.style.display = 'none';
+  } else {
+    copyBtn.style.display = 'inline-flex';
+    var typeNames = { bug: '问题反馈', feature: '功能建议', other: '其他' };
+    historyEl.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">已保存 ' + list.length + ' 条反馈：</div>' +
+      list.slice(-5).map(function(f, i) {
+        var d = new Date(f.time);
+        return '<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0;border-bottom:1px solid var(--border);">' +
+          '<span style="color:var(--text-secondary);font-weight:600;">' + typeNames[f.type] + '</span> ' +
+          d.toLocaleString('zh-CN') + '<br>' + escapeHtml(f.text.slice(0, 60)) + (f.text.length > 60 ? '…' : '') +
+        '</div>';
+      }).join('');
+  }
+}
+
 /* ===== TOAST ===== */
 function showToast(msg) {
   var toast = document.getElementById('toast');
@@ -1099,6 +1585,7 @@ function refreshAll() {
   if (currentPage === 'dashboard') renderDashboard();
   if (currentPage === 'transactions') renderTransactions();
   if (currentPage === 'budget') renderBudget();
+  if (currentPage === 'ai') renderAIAnalysis();
 }
 
 renderCategoryGrid();
