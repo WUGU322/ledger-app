@@ -215,8 +215,11 @@ body {
 /* ===== Summary Cards ===== */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+}
+@media (max-width: 1200px) {
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .summary-card {
@@ -250,6 +253,51 @@ body {
   font-size: 13px;
   color: var(--text-tertiary);
   margin-top: 4px;
+}
+
+/* ===== Line Chart ===== */
+.line-chart-wrap {
+  padding: 8px 4px 4px;
+  position: relative;
+}
+
+.line-chart-svg {
+  width: 100%;
+  height: 200px;
+}
+
+.line-chart-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  fill: var(--text-tertiary);
+}
+
+.line-area {
+  fill: url(#lineGrad);
+  stroke: none;
+}
+
+.line-path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.line-dot {
+  fill: #fff;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  r: 4;
+  transition: r 0.2s;
+}
+.line-dot:hover { r: 6; }
+
+.line-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
 }
 
 /* ===== Section Card ===== */
@@ -316,7 +364,7 @@ body {
 .txn-amount.expense { color: var(--expense); }
 
 .txn-actions { display: flex; gap: 4px; }
-.txn-actions .btn-icon { width: 30px; height: 30px; font-size: 14px; opacity: 0; transition: opacity var(--transition); }
+.txn-actions .btn-icon { width: 30px; height: 30px; font-size: 14px; opacity: 0.55; transition: opacity var(--transition); }
 .txn-item:hover .txn-actions .btn-icon { opacity: 1; }
 
 /* ===== Filter Bar ===== */
@@ -550,11 +598,8 @@ body {
 .ai-insight-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 
 .ai-chart-wrap {
-  padding: 16px 24px 8px;
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 180px;
+  padding: 8px 4px 4px;
+  position: relative;
   overflow-x: auto;
 }
 
@@ -647,6 +692,7 @@ body {
   .topbar { padding: 16px 16px 0; }
   .summary-grid { grid-template-columns: 1fr; }
   .category-grid { grid-template-columns: repeat(4, 1fr); }
+  .ai-summary-row { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -704,6 +750,11 @@ body {
           <div class="summary-amount expense" id="sumExpense">¥0.00</div>
           <div class="summary-sub" id="sumExpenseCount">0 笔</div>
         </div>
+        <div class="summary-card">
+          <div class="summary-label">今日结余</div>
+          <div class="summary-amount balance" id="sumTodayBalance">¥0.00</div>
+          <div class="summary-sub" id="sumTodayDetail">收入 ¥0 · 支出 ¥0</div>
+        </div>
       </div>
 
       <div class="section-card">
@@ -722,9 +773,14 @@ body {
           <div class="empty-desc">点击右上角「记一笔」开始记账</div>
         </div>
       </div>
-    </div>
 
-    <!-- Transactions Page -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">本月每日消费走势</span>
+        </div>
+        <div class="line-chart-wrap" id="dashLineChart"></div>
+      </div>
+    </div>
     <div class="page" id="page-transactions">
       <div class="filter-bar" id="filterBar">
         <button class="filter-chip active" data-filter="all">全部</button>
@@ -1081,11 +1137,19 @@ function renderDashboard() {
   var totalExpense = expenseTxns.reduce(function(s, t) { return s + t.amount; }, 0);
   var balance = totalIncome - totalExpense;
 
+  var today = new Date().toISOString().slice(0, 10);
+  var todayTxns = transactions.filter(function(t) { return t.date === today; });
+  var todayInc = todayTxns.filter(function(t) { return t.type === 'income'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var todayExp = todayTxns.filter(function(t) { return t.type === 'expense'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+  var todayBalance = todayInc - todayExp;
+
   document.getElementById('sumBalance').textContent = formatCurrency(balance);
   document.getElementById('sumIncome').textContent = formatCurrency(totalIncome);
   document.getElementById('sumExpense').textContent = formatCurrency(totalExpense);
   document.getElementById('sumIncomeCount').textContent = incomeTxns.length + ' 笔';
   document.getElementById('sumExpenseCount').textContent = expenseTxns.length + ' 笔';
+  document.getElementById('sumTodayBalance').textContent = formatCurrency(todayBalance);
+  document.getElementById('sumTodayDetail').textContent = '收入 ¥' + todayInc.toFixed(2) + ' · 支出 ¥' + todayExp.toFixed(2);
   document.getElementById('dashboardMonth').textContent = viewingYear + '年' + (viewingMonth + 1) + '月';
 
   var list = document.getElementById('recentTxns');
@@ -1099,6 +1163,94 @@ function renderDashboard() {
     empty.style.display = 'none';
     list.innerHTML = recent.map(function(t) { return renderTxnRow(t); }).join('');
   }
+
+  renderMonthlyLineChart();
+}
+
+function renderMonthlyLineChart() {
+  var container = document.getElementById('dashLineChart');
+  var now = new Date();
+  var year = viewingYear;
+  var month = viewingMonth;
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  var dailyData = [];
+  var maxVal = 0;
+  for (var d = 1; d <= daysInMonth; d++) {
+    var ds = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    var dInc = transactions.filter(function(t) { return t.date === ds && t.type === 'income'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+    var dExp = transactions.filter(function(t) { return t.date === ds && t.type === 'expense'; }).reduce(function(s, t) { return s + t.amount; }, 0);
+    dailyData.push({ date: ds, day: d, income: dInc, expense: dExp, net: dInc - dExp });
+    if (dExp > maxVal) maxVal = dExp;
+    if (dInc > maxVal) maxVal = dInc;
+  }
+
+  if (maxVal === 0) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-tertiary);font-size:14px;">本月暂无消费数据，开始记账后这里会展示每日走势</div>';
+    return;
+  }
+
+  var W = 720;
+  var H = 200;
+  var padL = 36;
+  var padR = 16;
+  var padT = 12;
+  var padB = 32;
+  var plotW = W - padL - padR;
+  var plotH = H - padT - padB;
+  var stepX = daysInMonth > 1 ? plotW / (daysInMonth - 1) : plotW;
+
+  var getX = function(i) { return padL + i * stepX; };
+  var getY = function(v) { return padT + plotH - (v / maxVal) * plotH; };
+
+  var expCoords = dailyData.map(function(d, i) { return getX(i) + ',' + getY(d.expense); }).join(' ');
+  var incCoords = dailyData.map(function(d, i) { return getX(i) + ',' + getY(d.income); }).join(' ');
+
+  var gridLines = '';
+  for (var g = 0; g <= 4; g++) {
+    var y = padT + (plotH * g / 4);
+    gridLines += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" class="line-grid"/>';
+  }
+
+  var dotsExp = dailyData.map(function(d, i) {
+    if (d.expense === 0) return '';
+    return '<circle cx="' + getX(i) + '" cy="' + getY(d.expense) + '" class="line-dot" style="stroke:var(--expense);" title="' + d.day + '日 支出 ¥' + d.expense.toFixed(2) + '"/>';
+  }).join('');
+
+  var dotsInc = dailyData.map(function(d, i) {
+    if (d.income === 0) return '';
+    return '<circle cx="' + getX(i) + '" cy="' + getY(d.income) + '" class="line-dot" style="stroke:var(--income);" title="' + d.day + '日 收入 ¥' + d.income.toFixed(2) + '"/>';
+  }).join('');
+
+  var xLabels = '';
+  var showEvery = daysInMonth <= 15 ? 1 : (daysInMonth <= 25 ? 2 : 3);
+  for (var i = 0; i < daysInMonth; i++) {
+    if (i % showEvery === 0) {
+      xLabels += '<text x="' + getX(i) + '" y="' + (H - 6) + '" text-anchor="middle" class="line-chart-label">' + dailyData[i].day + '</text>';
+    }
+  }
+
+  container.innerHTML = '<svg class="line-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+    '<defs>' +
+      '<linearGradient id="dashLineGradExp" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--expense)" stop-opacity="0.15"/>' +
+        '<stop offset="100%" stop-color="var(--expense)" stop-opacity="0.02"/>' +
+      '</linearGradient>' +
+      '<linearGradient id="dashLineGradInc" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--income)" stop-opacity="0.15"/>' +
+        '<stop offset="100%" stop-color="var(--income)" stop-opacity="0.02"/>' +
+      '</linearGradient>' +
+    '</defs>' +
+    gridLines +
+    '<polygon points="' + getX(0) + ',' + getY(0) + ' ' + expCoords + ' ' + getX(daysInMonth - 1) + ',' + getY(0) + '" style="fill:url(#dashLineGradExp);stroke:none;"/>' +
+    '<polyline points="' + expCoords + '" style="fill:none;stroke:var(--expense);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"/>' +
+    '<polygon points="' + getX(0) + ',' + getY(0) + ' ' + incCoords + ' ' + getX(daysInMonth - 1) + ',' + getY(0) + '" style="fill:url(#dashLineGradInc);stroke:none;"/>' +
+    '<polyline points="' + incCoords + '" style="fill:none;stroke:var(--income);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"/>' +
+    dotsExp + dotsInc +
+    xLabels +
+    '<text x="' + (W - padR) + '" y="' + (padT + 6) + '" text-anchor="end" class="line-chart-label" style="fill:var(--expense);">— 支出</text>' +
+    '<text x="' + (W - padR) + '" y="' + (padT + 20) + '" text-anchor="end" class="line-chart-label" style="fill:var(--income);">— 收入</text>' +
+  '</svg>';
 }
 
 function changeMonth(delta) {
@@ -1301,19 +1453,62 @@ function renderDailyChart() {
   range.textContent = (twoWeeksAgo.getMonth() + 1) + '/' + twoWeeksAgo.getDate() + ' - ' + (today.getMonth() + 1) + '/' + today.getDate();
 
   if (maxExp === 0) {
-    chart.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-tertiary);font-size:14px;">近14天暂无支出数据</div>';
+    chart.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-tertiary);font-size:14px;">近14天暂无支出数据，记账后这里会画出每日消费曲线</div>';
     return;
   }
 
-  chart.innerHTML = days.map(function(d) {
-    var h = maxExp > 0 ? Math.max((d.amount / maxExp) * 140, 2) : 0;
+  var W = 720;
+  var H = 200;
+  var padL = 36;
+  var padR = 16;
+  var padT = 12;
+  var padB = 32;
+  var plotW = W - padL - padR;
+  var plotH = H - padT - padB;
+  var stepX = plotW / (days.length - 1);
+
+  var getX = function(i) { return padL + i * stepX; };
+  var getY = function(v) { return padT + plotH - (v / maxExp) * plotH; };
+
+  var coords = days.map(function(d, i) { return getX(i) + ',' + getY(d.amount); }).join(' ');
+
+  var gridLines = '';
+  for (var g = 0; g <= 4; g++) {
+    var y = padT + (plotH * g / 4);
+    gridLines += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" class="line-grid"/>';
+  }
+
+  var dots = days.map(function(d, i) {
     var isToday = d.date === today.toISOString().slice(0, 10);
-    return '<div class="ai-bar-col">' +
-      '<div class="ai-bar-val">' + (d.amount > 0 ? '\u00A5' + d.amount.toFixed(0) : '') + '</div>' +
-      '<div class="ai-bar" style="height:' + h + 'px;background:' + (isToday ? 'var(--accent)' : 'rgba(0,113,227,0.3)') + ';"></div>' +
-      '<div class="ai-bar-day" style="' + (isToday ? 'color:var(--accent);font-weight:700;' : '') + '">' + d.label + '</div>' +
-    '</div>';
+    if (d.amount === 0) return '';
+    return '<circle cx="' + getX(i) + '" cy="' + getY(d.amount) + '" class="line-dot" ' +
+      'style="' + (isToday ? 'stroke:var(--accent);r:5;fill:var(--accent);' : 'stroke:var(--accent);') + '" ' +
+      'title="' + d.label + ' ¥' + d.amount.toFixed(2) + '"/>';
   }).join('');
+
+  var xLabels = '';
+  var showEvery = 2;
+  for (var i = 0; i < days.length; i++) {
+    if (i % showEvery === 0 || i === days.length - 1) {
+      var isToday = days[i].date === today.toISOString().slice(0, 10);
+      xLabels += '<text x="' + getX(i) + '" y="' + (H - 6) + '" text-anchor="middle" class="line-chart-label"' +
+        (isToday ? ' style="fill:var(--accent);font-weight:700;"' : '') + '>' + days[i].label + '</text>';
+    }
+  }
+
+  chart.innerHTML = '<svg class="line-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+    '<defs>' +
+      '<linearGradient id="aiLineGrad" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--accent)" stop-opacity="0.15"/>' +
+        '<stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>' +
+      '</linearGradient>' +
+    '</defs>' +
+    gridLines +
+    '<polygon points="' + getX(0) + ',' + getY(0) + ' ' + coords + ' ' + getX(days.length - 1) + ',' + getY(0) + '" style="fill:url(#aiLineGrad);stroke:none;"/>' +
+    '<polyline points="' + coords + '" style="fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;"/>' +
+    dots +
+    xLabels +
+  '</svg>';
 }
 
 function renderSuggestions() {
