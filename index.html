@@ -367,6 +367,38 @@ body {
 .txn-actions .btn-icon { width: 30px; height: 30px; font-size: 14px; opacity: 0.55; transition: opacity var(--transition); }
 .txn-item:hover .txn-actions .btn-icon { opacity: 1; }
 
+/* ===== Login & Sync ===== */
+.login-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.login-status.connected {
+  background: rgba(52,199,89,0.1);
+  color: var(--income);
+}
+.login-status.disconnected {
+  background: rgba(142,142,147,0.1);
+  color: var(--text-secondary);
+}
+.login-status .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.login-status.connected .status-dot { background: var(--income); }
+.login-status.disconnected .status-dot { background: var(--text-tertiary); }
+
+/* ===== Data Page ===== */
+.data-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1000px) {
+  .data-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ===== Filter Bar ===== */
 .filter-bar {
   display: flex;
@@ -725,7 +757,7 @@ body {
       <span class="nav-icon">&#128451;</span> 数据
     </button>
   </nav>
-  <div class="sidebar-footer">Ledger v4</div>
+  <div class="sidebar-footer">Ledger v5</div>
 </aside>
 
 <!-- Main -->
@@ -759,6 +791,16 @@ body {
           <div class="summary-amount balance" id="sumTodayBalance">¥0.00</div>
           <div class="summary-sub" id="sumTodayDetail">收入 ¥0 · 支出 ¥0</div>
         </div>
+      </div>
+
+      <div class="quick-record-wrap" id="quickRecordBar"></div>
+
+      <div id="qrCustomize" style="display:none;padding:0 0 12px;flex-wrap:wrap;gap:8px;align-items:center;">
+        <input type="text" id="qrCustomLabel" placeholder="标签名(如：午餐)" style="width:100px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text);">
+        <input type="number" id="qrCustomAmount" placeholder="金额" step="0.01" min="0.01" style="width:80px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text);">
+        <button class="btn btn-primary btn-sm" onclick="addQuickPreset()" style="padding:6px 14px;font-size:13px;">添加</button>
+        <button class="btn btn-sm" onclick="resetQuickPresets()" style="padding:6px 14px;font-size:13px;color:var(--text-secondary);">恢复默认</button>
+        <span style="font-size:11px;color:var(--text-tertiary);margin-left:4px;">分类默认「餐饮」</span>
       </div>
 
       <div class="section-card">
@@ -899,11 +941,39 @@ body {
           <div id="importMsg" style="font-size:13px;color:var(--income);display:none;"></div>
 
           <div style="border-top:1px solid var(--border);padding-top:16px;">
-            <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">多设备同步说明</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px;">&#9729; GitHub 云同步</div>
+            <div id="syncSection">
+              <div id="loginStatusArea" style="margin-bottom:12px;"></div>
+              <div id="loginForm" style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+                  登录 GitHub 后，数据会自动同步到你的私有 Gist。<br>
+                  多设备登录同一账号，数据自动合并。
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <input type="password" id="ghTokenInput" placeholder="粘贴 GitHub Personal Access Token" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--card);color:var(--text);">
+                  <button class="btn btn-primary btn-sm" onclick="ghLogin()" style="padding:8px 16px;font-size:13px;">登录</button>
+                </div>
+                <div style="font-size:11px;color:var(--text-tertiary);line-height:1.5;">
+                  如何获取 Token：<br>
+                  1. 打开 <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent);">github.com/settings/tokens</a><br>
+                  2. 点 <strong>Generate new token (classic)</strong><br>
+                  3. 勾选 <strong>gist</strong> 权限，过期时间选 <strong>No expiration</strong><br>
+                  4. 生成后复制，粘贴到上方输入框
+                </div>
+              </div>
+              <div id="syncControls" style="display:none;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                <button class="btn btn-primary btn-sm" onclick="ghSyncNow()" style="padding:8px 16px;font-size:13px;">&#128259; 立即同步</button>
+                <button class="btn btn-sm" onclick="ghLogout()" style="padding:8px 16px;font-size:13px;color:var(--expense);">退出登录</button>
+                <span id="syncTime" style="font-size:11px;color:var(--text-tertiary);align-self:center;"></span>
+                <span id="syncError" style="font-size:11px;color:var(--expense);align-self:center;display:none;"></span>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">&#128196; 手动导入导出</div>
             <div style="font-size:13px;color:var(--text-tertiary);line-height:1.6;">
-              目前为纯本地 PWA，数据存储在浏览器中。<br>
-              要实现多设备同步：在 A 设备<strong>导出数据</strong> → JSON 文件 → 在 B 设备<strong>导入</strong>即可。<br>
-              你可以通过微信/文件传输等方式传递 JSON 文件。
+              导出 JSON 文件到本地备份，或从文件恢复数据。导入时会按 ID 合并，不会丢失已有记录。
             </div>
           </div>
         </div>
@@ -993,10 +1063,226 @@ function loadTransactions() {
 
 function saveTransactions(txns) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(txns));
+  if (ghToken) scheduleGistPush();
 }
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+/* ===== GITHUB GIST SYNC ===== */
+var GIST_SYNC_KEY = 'ledger_gist_sync';
+var ghToken = '';
+var ghGistId = '';
+var ghUsername = '';
+var gistPushTimer = null;
+
+(function initGistSync() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(GIST_SYNC_KEY));
+    if (saved && saved.token && saved.gistId) {
+      ghToken = saved.token;
+      ghGistId = saved.gistId;
+      ghUsername = saved.username || '';
+      renderLoginUI();
+      ghPullFromGist();
+    }
+  } catch (e) { /* not logged in */ }
+})();
+
+function saveGistState() {
+  try {
+    localStorage.setItem(GIST_SYNC_KEY, JSON.stringify({
+      token: ghToken, gistId: ghGistId, username: ghUsername,
+      lastSync: ghLastSync
+    }));
+  } catch (e) {}
+}
+
+function renderLoginUI() {
+  var loggedIn = !!(ghToken && ghGistId);
+  var statusEl = document.getElementById('loginStatusArea');
+  var formEl = document.getElementById('loginForm');
+  var ctrlEl = document.getElementById('syncControls');
+  var timeEl = document.getElementById('syncTime');
+
+  if (loggedIn) {
+    statusEl.innerHTML = '<div class="login-status connected"><span class="status-dot"></span> 已连接 GitHub · ' + escapeHtml(ghUsername || '—') + '</div>';
+    formEl.style.display = 'none';
+    ctrlEl.style.display = 'flex';
+    if (ghLastSync) {
+      var d = new Date(ghLastSync);
+      timeEl.textContent = '上次同步: ' + d.toLocaleString('zh-CN');
+    }
+  } else {
+    statusEl.innerHTML = '<div class="login-status disconnected"><span class="status-dot"></span> 未登录</div>';
+    formEl.style.display = 'flex';
+    ctrlEl.style.display = 'none';
+  }
+}
+
+function ghApi(path, opts) {
+  opts = opts || {};
+  opts.headers = opts.headers || {};
+  opts.headers['Authorization'] = 'Bearer ' + ghToken;
+  opts.headers['Accept'] = 'application/vnd.github.v3+json';
+  return fetch('https://api.github.com' + path, opts);
+}
+
+function ghLogin() {
+  var token = document.getElementById('ghTokenInput').value.trim();
+  if (!token) { showToast('请输入 GitHub Token'); return; }
+
+  var syncErrEl = document.getElementById('syncError');
+  syncErrEl.style.display = 'none';
+
+  ghToken = token;
+  ghApi('/user').then(function(r) {
+    if (!r.ok) throw new Error('Token 无效 (HTTP ' + r.status + ')');
+    return r.json();
+  }).then(function(user) {
+    ghUsername = user.login;
+    showToast('已登录 ' + user.login);
+    return ghFindOrCreateGist();
+  }).then(function() {
+    saveGistState();
+    renderLoginUI();
+    document.getElementById('ghTokenInput').value = '';
+    return ghPullFromGist();
+  }).catch(function(err) {
+    ghToken = '';
+    ghGistId = '';
+    syncErrEl.textContent = '登录失败: ' + err.message;
+    syncErrEl.style.display = 'inline';
+  });
+}
+
+function ghLogout() {
+  if (!confirm('退出登录后将停止云同步，本地数据不受影响。确定退出？')) return;
+  ghToken = '';
+  ghGistId = '';
+  ghUsername = '';
+  ghLastSync = null;
+  localStorage.removeItem(GIST_SYNC_KEY);
+  renderLoginUI();
+  showToast('已退出登录');
+}
+
+function ghFindOrCreateGist() {
+  return ghApi('/gists?per_page=100').then(function(r) {
+    if (!r.ok) throw new Error('获取 Gist 列表失败 (HTTP ' + r.status + ')');
+    return r.json();
+  }).then(function(gists) {
+    for (var i = 0; i < gists.length; i++) {
+      if (gists[i].files && gists[i].files['ledger-data.json'] && gists[i].description === 'Ledger App 记账数据') {
+        ghGistId = gists[i].id;
+        return;
+      }
+    }
+    return ghApi('/gists', {
+      method: 'POST',
+      body: JSON.stringify({
+        description: 'Ledger App 记账数据',
+        public: false,
+        files: { 'ledger-data.json': { content: JSON.stringify(transactions) } }
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    }).then(function(r) {
+      if (!r.ok) throw new Error('创建 Gist 失败 (HTTP ' + r.status + ')');
+      return r.json();
+    }).then(function(gist) {
+      ghGistId = gist.id;
+    });
+  });
+}
+
+function ghPullFromGist() {
+  if (!ghToken || !ghGistId) return Promise.resolve();
+
+  return ghApi('/gists/' + ghGistId).then(function(r) {
+    if (!r.ok) {
+      if (r.status === 404) { ghGistId = ''; saveGistState(); renderLoginUI(); return; }
+      throw new Error('拉取失败 (HTTP ' + r.status + ')');
+    }
+    return r.json();
+  }).then(function(gist) {
+    if (!gist || !gist.files || !gist.files['ledger-data.json']) return;
+    try {
+      var remote = JSON.parse(gist.files['ledger-data.json'].content);
+      if (!Array.isArray(remote)) return;
+
+      var existingMap = {};
+      transactions.forEach(function(t) { existingMap[t.id] = t; });
+      remote.forEach(function(t) {
+        var local = existingMap[t.id];
+        if (!local || (t._updated && (!local._updated || t._updated > local._updated))) {
+          existingMap[t.id] = t;
+        }
+      });
+      transactions = Object.values(existingMap);
+      transactions.sort(function(a, b) {
+        return b.date.localeCompare(a.date) || (b.id || '').localeCompare(a.id || '');
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+
+      ghLastSync = Date.now();
+      saveGistState();
+      renderLoginUI();
+      refreshAll();
+      showToast('已从云端同步 ' + remote.length + ' 条记录');
+    } catch (e) {
+      showToast('云端数据解析失败');
+    }
+  }).catch(function(err) {
+    var syncErrEl = document.getElementById('syncError');
+    if (syncErrEl) { syncErrEl.textContent = '同步失败: ' + err.message; syncErrEl.style.display = 'inline'; }
+  });
+}
+
+var ghLastSync = null;
+(function() {
+  try { var s = JSON.parse(localStorage.getItem(GIST_SYNC_KEY)); ghLastSync = s.lastSync || null; } catch(e) {}
+})();
+
+function scheduleGistPush() {
+  clearTimeout(gistPushTimer);
+  gistPushTimer = setTimeout(ghPushToGist, 2000);
+}
+
+function ghPushToGist() {
+  if (!ghToken || !ghGistId) return Promise.resolve();
+
+  var data = transactions.map(function(t) {
+    var copy = {};
+    Object.keys(t).forEach(function(k) { copy[k] = t[k]; });
+    copy._updated = Date.now();
+    return copy;
+  });
+
+  return ghApi('/gists/' + ghGistId, {
+    method: 'PATCH',
+    body: JSON.stringify({ files: { 'ledger-data.json': { content: JSON.stringify(data) } } }),
+    headers: { 'Content-Type': 'application/json' }
+  }).then(function(r) {
+    if (!r.ok) throw new Error('上传失败 (HTTP ' + r.status + ')');
+    ghLastSync = Date.now();
+    saveGistState();
+    renderLoginUI();
+  }).catch(function(err) {
+    var syncErrEl = document.getElementById('syncError');
+    if (syncErrEl) { syncErrEl.textContent = '上传失败: ' + err.message; syncErrEl.style.display = 'inline'; }
+  });
+}
+
+function ghSyncNow() {
+  var syncErrEl = document.getElementById('syncError');
+  syncErrEl.style.display = 'none';
+  showToast('正在同步...');
+  ghPushToGist().then(function() {
+    return ghPullFromGist();
+  }).then(function() {
+    showToast('同步完成');
+  });
 }
 
 /* ===== STATE ===== */
@@ -1200,6 +1486,7 @@ function renderDashboard() {
   }
 
   renderMonthlyLineChart();
+  renderQuickRecordBar();
 }
 
 function renderMonthlyLineChart() {
@@ -1683,6 +1970,7 @@ function renderWeekCompare() {
 /* ===== DATA MANAGEMENT ===== */
 function renderDataPage() {
   renderDataStats();
+  renderLoginUI();
   document.getElementById('importMsg').style.display = 'none';
   document.getElementById('importFile').value = '';
 }
@@ -1791,6 +2079,106 @@ function clearAllData() {
   refreshAll();
   renderDataPage();
   showToast('所有数据已清空');
+}
+
+/* ===== QUICK RECORD ===== */
+var QUICK_PRESETS_KEY = 'ledger_quick_presets';
+var DEFAULT_PRESETS = [
+  { label: '午餐', amount: 25, icon: '🍱' },
+  { label: '晚餐', amount: 30, icon: '🍲' },
+  { label: '咖啡', amount: 15, icon: '☕' },
+  { label: '交通', amount: 10, icon: '🚇' },
+  { label: '奶茶', amount: 18, icon: '🧋' },
+  { label: '零食', amount: 12, icon: '🍪' },
+  { label: '早餐', amount: 10, icon: '🥐' },
+  { label: '打车', amount: 25, icon: '🚕' },
+  { label: '话费', amount: 50, icon: '📱' },
+  { label: '红包', amount: 200, icon: '🧧' }
+];
+
+function getQuickPresets() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(QUICK_PRESETS_KEY));
+    if (Array.isArray(saved) && saved.length > 0) return saved;
+  } catch (e) {}
+  return DEFAULT_PRESETS.slice();
+}
+
+function saveQuickPresets(presets) {
+  try { localStorage.setItem(QUICK_PRESETS_KEY, JSON.stringify(presets)); } catch(e) {}
+}
+
+function renderQuickRecordBar() {
+  var presets = getQuickPresets();
+  var bar = document.getElementById('quickRecordBar');
+  if (!bar) return;
+
+  var html = presets.map(function(p) {
+    return '<button class="quick-record-chip" onclick="quickRecord(' + p.amount + ',\'' + escapeHtml(p.label) + '\')" title="记一笔 ' + escapeHtml(p.label) + ' ¥' + p.amount.toFixed(2) + '">' +
+      '<span class="qr-icon">' + (p.icon || '💸') + '</span> ' +
+      escapeHtml(p.label) + ' ¥' + p.amount.toFixed(p.amount % 1 === 0 ? 0 : 2) +
+    '</button>';
+  }).join('');
+
+  html += '<span class="quick-record-edit" onclick="toggleQrCustomize()" title="自定义快记按钮">⚙ 自定义</span>';
+  bar.innerHTML = html;
+}
+
+function quickRecord(amount, label) {
+  var today = new Date().toISOString().slice(0, 10);
+  var txn = {
+    id: generateId(),
+    type: 'expense',
+    category: 'food',
+    amount: amount,
+    date: today,
+    note: label,
+    _updated: Date.now()
+  };
+  transactions.unshift(txn);
+  saveTransactions(transactions);
+  refreshAll();
+  showToast('已记: ' + label + ' ¥' + amount.toFixed(2));
+}
+
+function addQuickPreset() {
+  var label = document.getElementById('qrCustomLabel').value.trim();
+  var amtStr = document.getElementById('qrCustomAmount').value.trim();
+  if (!label) { showToast('请输入标签名'); return; }
+  var amt = parseFloat(amtStr);
+  if (!amt || amt <= 0) { showToast('请输入有效金额'); return; }
+
+  var presets = getQuickPresets();
+  // Replace if same label exists, else add
+  var found = false;
+  for (var i = 0; i < presets.length; i++) {
+    if (presets[i].label === label) { presets[i].amount = amt; found = true; break; }
+  }
+  if (!found) presets.push({ label: label, amount: amt, icon: getPresetIcon(label) });
+  saveQuickPresets(presets);
+  renderQuickRecordBar();
+  document.getElementById('qrCustomLabel').value = '';
+  document.getElementById('qrCustomAmount').value = '';
+  showToast('已添加: ' + label);
+}
+
+function resetQuickPresets() {
+  if (!confirm('恢复默认快记按钮？自定义的将被替换。')) return;
+  saveQuickPresets(DEFAULT_PRESETS.slice());
+  renderQuickRecordBar();
+  showToast('已恢复默认');
+}
+
+function toggleQrCustomize() {
+  var el = document.getElementById('qrCustomize');
+  if (!el) return;
+  el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+  document.getElementById('qrCustomLabel').focus();
+}
+
+function getPresetIcon(label) {
+  var map = { '午餐': '🍱', '晚餐': '🍲', '咖啡': '☕', '交通': '🚇', '奶茶': '🧋', '零食': '🍪', '早餐': '🥐', '打车': '🚕', '话费': '📱', '红包': '🧧', '水果': '🍎', '外卖': '📦', '购物': '🛒', '娱乐': '🎮', '运动': '🏃', '买菜': '🥬' };
+  return map[label] || '💸';
 }
 
 /* ===== FEEDBACK ===== */
