@@ -693,6 +693,7 @@ body {
   .summary-grid { grid-template-columns: 1fr; }
   .category-grid { grid-template-columns: repeat(4, 1fr); }
   .ai-summary-row { grid-template-columns: 1fr; }
+  .txn-actions .btn-icon { width: 36px; height: 36px; font-size: 16px; opacity: 0.6; }
 }
 </style>
 </head>
@@ -720,8 +721,11 @@ body {
     <button class="nav-item" data-page="feedback">
       <span class="nav-icon">&#128172;</span> 反馈
     </button>
+    <button class="nav-item" data-page="data">
+      <span class="nav-icon">&#128451;</span> 数据
+    </button>
   </nav>
-  <div class="sidebar-footer">Ledger v3.1</div>
+  <div class="sidebar-footer">Ledger v4</div>
 </aside>
 
 <!-- Main -->
@@ -876,6 +880,36 @@ body {
       </div>
     </div>
 
+    <!-- Data Page -->
+    <div class="page" id="page-data">
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">数据管理</span>
+        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:20px;">
+          <div class="data-stats-grid" id="dataStats"></div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="exportData()">&#128229; 导出数据</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">&#128228; 导入数据</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+            <button class="btn btn-secondary" style="color:var(--expense);" onclick="clearAllData()">&#128465; 清空所有数据</button>
+          </div>
+
+          <div id="importMsg" style="font-size:13px;color:var(--income);display:none;"></div>
+
+          <div style="border-top:1px solid var(--border);padding-top:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">多设备同步说明</div>
+            <div style="font-size:13px;color:var(--text-tertiary);line-height:1.6;">
+              目前为纯本地 PWA，数据存储在浏览器中。<br>
+              要实现多设备同步：在 A 设备<strong>导出数据</strong> → JSON 文件 → 在 B 设备<strong>导入</strong>即可。<br>
+              你可以通过微信/文件传输等方式传递 JSON 文件。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 <!-- Add/Edit Transaction Modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
@@ -988,6 +1022,7 @@ document.querySelectorAll('.nav-item').forEach(function(btn) {
     if (currentPage === 'budget') renderBudget();
     if (currentPage === 'ai') renderAIAnalysis();
     if (currentPage === 'feedback') renderFeedback();
+    if (currentPage === 'data') renderDataPage();
   });
 });
 
@@ -1645,6 +1680,119 @@ function renderWeekCompare() {
     '</div>';
 }
 
+/* ===== DATA MANAGEMENT ===== */
+function renderDataPage() {
+  renderDataStats();
+  document.getElementById('importMsg').style.display = 'none';
+  document.getElementById('importFile').value = '';
+}
+
+function renderDataStats() {
+  var all = transactions;
+  var inc = all.filter(function(t) { return t.type === 'income'; });
+  var exp = all.filter(function(t) { return t.type === 'expense'; });
+  var totalInc = inc.reduce(function(s, t) { return s + t.amount; }, 0);
+  var totalExp = exp.reduce(function(s, t) { return s + t.amount; }, 0);
+
+  var dates = all.map(function(t) { return t.date; }).sort();
+  var firstDate = dates[0] || '—';
+  var lastDate = dates[dates.length - 1] || '—';
+
+  var byCat = {};
+  exp.forEach(function(t) { byCat[t.category] = (byCat[t.category] || 0) + t.amount; });
+  var topCatId = '';
+  var topCatAmt = 0;
+  Object.keys(byCat).forEach(function(k) { if (byCat[k] > topCatAmt) { topCatAmt = byCat[k]; topCatId = k; } });
+
+  document.getElementById('dataStats').innerHTML =
+    '<div class="ai-insight-card">' +
+      '<div class="ai-insight-icon">&#128203;</div>' +
+      '<div class="ai-insight-value">' + all.length + '</div>' +
+      '<div class="ai-insight-label">总交易数</div>' +
+    '</div>' +
+    '<div class="ai-insight-card">' +
+      '<div class="ai-insight-icon">&#128176;</div>' +
+      '<div class="ai-insight-value income">' + formatCurrency(totalInc) + '</div>' +
+      '<div class="ai-insight-label">总收入 · ' + inc.length + ' 笔</div>' +
+    '</div>' +
+    '<div class="ai-insight-card">' +
+      '<div class="ai-insight-icon">&#128178;</div>' +
+      '<div class="ai-insight-value expense">' + formatCurrency(totalExp) + '</div>' +
+      '<div class="ai-insight-label">总支出 · ' + exp.length + ' 笔</div>' +
+    '</div>' +
+    '<div class="ai-insight-card">' +
+      '<div class="ai-insight-icon">&#128197;</div>' +
+      '<div class="ai-insight-value" style="font-size:14px;">' + firstDate + ' ~ ' + lastDate + '</div>' +
+      '<div class="ai-insight-label">时间范围</div>' +
+    '</div>';
+}
+
+function exportData() {
+  if (transactions.length === 0) { showToast('暂无数据可导出'); return; }
+  var blob = new Blob([JSON.stringify(transactions, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'ledger-data-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('已导出 ' + transactions.length + ' 条记录');
+}
+
+function importData(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error('格式错误');
+
+      // Validate entries
+      var valid = imported.filter(function(t) {
+        return t && t.id && t.type && t.amount && t.date && t.category;
+      });
+
+      if (valid.length === 0) throw new Error('没有有效记录');
+
+      // Merge: replace by id, add new ones
+      var existingMap = {};
+      transactions.forEach(function(t) { existingMap[t.id] = t; });
+      valid.forEach(function(t) { existingMap[t.id] = t; });
+      transactions = Object.values(existingMap);
+      transactions.sort(function(a, b) {
+        return b.date.localeCompare(a.date) || (b.id || '').localeCompare(a.id || '');
+      });
+      saveTransactions(transactions);
+      refreshAll();
+
+      var msg = document.getElementById('importMsg');
+      msg.textContent = '✅ 成功导入 ' + valid.length + ' 条记录（合并后共 ' + transactions.length + ' 条）';
+      msg.style.display = 'block';
+    } catch (err) {
+      var msg = document.getElementById('importMsg');
+      msg.textContent = '❌ 导入失败：' + err.message;
+      msg.style.color = 'var(--expense)';
+      msg.style.display = 'block';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData() {
+  if (!confirm('确定要清空所有 ' + transactions.length + ' 条交易记录吗？\n\n建议先导出备份！\n\n此操作不可撤销。')) return;
+  var confirm2 = confirm('再次确认：真的要删除所有数据吗？');
+  if (!confirm2) return;
+  transactions = [];
+  saveTransactions(transactions);
+  refreshAll();
+  renderDataPage();
+  showToast('所有数据已清空');
+}
+
 /* ===== FEEDBACK ===== */
 var FEEDBACK_KEY = 'ledger_feedback';
 var feedbackType = 'bug';
@@ -1781,6 +1929,7 @@ function refreshAll() {
   if (currentPage === 'transactions') renderTransactions();
   if (currentPage === 'budget') renderBudget();
   if (currentPage === 'ai') renderAIAnalysis();
+  if (currentPage === 'data') renderDataPage();
 }
 
 renderCategoryGrid();
@@ -1788,9 +1937,26 @@ renderDashboard();
 </script>
 <!-- Service Worker -->
 <script>
+var swReady = false;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(function(reg) {
     console.log('SW registered:', reg.scope);
+
+    navigator.serviceWorker.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'SW_UPDATED') {
+        showToast('✅ App 已更新到最新版');
+      }
+    });
+
+    reg.addEventListener('updatefound', function() {
+      var newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', function() {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          showToast('🔁 发现更新，关闭再打开即生效');
+        }
+      });
+    });
   }).catch(function(err) {
     console.log('SW failed:', err);
   });

@@ -1,4 +1,4 @@
-var CACHE_NAME = 'ledger-v3';
+var CACHE_NAME = 'ledger-v4';
 var ASSETS = [
   './',
   './index.html',
@@ -24,6 +24,12 @@ self.addEventListener('activate', function(e) {
         names.filter(function(n) { return n !== CACHE_NAME; })
              .map(function(n) { return caches.delete(n); })
       );
+    }).then(function() {
+      return self.clients.matchAll().then(function(clients) {
+        clients.forEach(function(client) {
+          client.postMessage({ type: 'SW_UPDATED' });
+        });
+      });
     })
   );
   self.clients.claim();
@@ -46,10 +52,10 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // Cache-first for other assets (CSS/JS/images — but we're inline so this mainly hits icons)
+  // Stale-while-revalidate for everything else
   e.respondWith(
     caches.match(e.request).then(function(cached) {
-      return cached || fetch(e.request).then(function(response) {
+      var fetched = fetch(e.request).then(function(response) {
         if (response && response.status === 200) {
           var clone = response.clone();
           caches.open(CACHE_NAME).then(function(cache) {
@@ -58,6 +64,7 @@ self.addEventListener('fetch', function(e) {
         }
         return response;
       });
+      return cached || fetched;
     })
   );
 });
