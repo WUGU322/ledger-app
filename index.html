@@ -758,22 +758,22 @@ body.rain-mode .rain-bg-layer,
 body.rain-mode #rainCanvas { display: block; }
 
 body.rain-mode .sidebar {
-  background: rgba(255,255,255,0.58);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 body.rain-mode .main { background: transparent; }
 body.rain-mode .content { background: transparent; }
 body.rain-mode .summary-card,
 body.rain-mode .section-card,
 body.rain-mode .ai-insight-card {
-  background: rgba(255,255,255,0.65);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  background: rgba(255,255,255,0.28);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
 }
 body.rain-mode .page-title { color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 body.rain-mode .topbar { color: #fff; }
-body.rain-mode .modal-overlay { background: rgba(0,0,0,0.5); }
+body.rain-mode .modal-overlay { background: rgba(0,0,0,0.55); }
 
 /* Rain toggle button */
 .rain-toggle {
@@ -807,31 +807,95 @@ body.rain-mode .nav-item.active { color: #fff; background: rgba(255,255,255,0.15
 body.rain-mode .summary-label { color: rgba(255,255,255,0.7); }
 body.rain-mode .summary-sub { color: rgba(255,255,255,0.5); }
 body.rain-mode .section-title { color: rgba(255,255,255,0.9); }
-body.rain-mode .empty-state { color: rgba(255,255,255,0.5); }
+body.rain-mode .empty-state { color: rgba(255,255,255,0.55); }
+body.rain-mode .empty-title { color: rgba(255,255,255,0.8); }
+body.rain-mode .empty-desc { color: rgba(255,255,255,0.5); }
 body.rain-mode .txn-category { color: #222; }
 body.rain-mode .txn-note { color: #555; }
 body.rain-mode .txn-date { color: #888; }
 body.rain-mode .txn-item:hover { background: rgba(255,255,255,0.3); }
-body.rain-mode .txn-amount.income { color: #1a9e3a; }
-body.rain-mode .txn-amount.expense { color: #d93030; }
+body.rain-mode .txn-amount.income { color: #1a8a32; }
+body.rain-mode .txn-amount.expense { color: #d42a28; }
 body.rain-mode .btn-primary { background: rgba(0,113,227,0.85); }
 body.rain-mode .btn-secondary { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 body.rain-mode .form-input, body.rain-mode .form-select { color: #222; }
 body.rain-mode .type-btn.active { color: #222; }
 body.rain-mode .ai-insight-value { color: #222; }
 body.rain-mode .ai-insight-label { color: #555; }
+body.rain-mode .filter-chip { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.2); }
+body.rain-mode .filter-chip.active { background: var(--accent); color: #fff; }
+body.rain-mode .section-header { border-bottom-color: rgba(255,255,255,0.1); }
+body.rain-mode .txn-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.08); }
+body.rain-mode .budget-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.08); }
+body.rain-mode .ai-suggestion-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.08); }
 
 @media (max-width: 768px) {
   body.rain-mode .sidebar {
-    background: rgba(255,255,255,0.5);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom-color: rgba(255,255,255,0.08);
   }
   body.rain-mode .summary-card,
   body.rain-mode .section-card,
   body.rain-mode .ai-insight-card {
-    background: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.22);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
+  body.rain-mode .filter-chip { background: rgba(255,255,255,0.18); }
+}
+
+/* ===== Update Banner (native-app-style) ===== */
+.update-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  z-index: 300;
+  background: #1d1d1f;
+  color: #fff;
+  border-radius: 20px;
+  padding: 16px 20px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-width: 90vw;
+}
+.update-banner.show { transform: translateX(-50%) translateY(0); }
+.update-banner .update-banner-icon { font-size: 22px; }
+.update-banner .update-banner-body { flex: 1; min-width: 0; }
+.update-banner .update-banner-title { font-weight: 600; margin-bottom: 2px; }
+.update-banner .update-banner-desc { font-size: 12px; color: rgba(255,255,255,0.6); }
+.update-banner .update-banner-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+.update-banner .update-banner-btn:hover { background: #0077ed; }
+.update-banner .update-banner-btn:active { transform: scale(0.96); }
+.update-banner .update-banner-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 </style>
 </head>
@@ -1143,6 +1207,16 @@ body.rain-mode .ai-insight-label { color: #555; }
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+<!-- Update Banner -->
+<div class="update-banner" id="updateBanner">
+  <span class="update-banner-icon">🔄</span>
+  <div class="update-banner-body">
+    <div class="update-banner-title">发现新版本</div>
+    <div class="update-banner-desc">更新将立即生效</div>
+  </div>
+  <button class="update-banner-btn" onclick="applyUpdate()">立即更新</button>
+</div>
 
 <script>
 /* ===== DATA ===== */
@@ -2443,15 +2517,54 @@ renderDashboard();
 </script>
 <!-- Service Worker -->
 <script>
-var swReady = false;
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(function(reg) {
-    console.log('SW registered:', reg.scope);
+var _pendingSW = null;
 
-    navigator.serviceWorker.addEventListener('message', function(e) {
-      if (e.data && e.data.type === 'SW_UPDATED') {
-        showToast('✅ App 已更新到最新版');
-      }
+function showUpdateBanner() {
+  var banner = document.getElementById('updateBanner');
+  if (banner) banner.classList.add('show');
+}
+
+// Called by the "立即更新" button
+function applyUpdate() {
+  if (_pendingSW) {
+    // Send skip-waiting command to the waiting SW
+    _pendingSW.postMessage({ type: 'SKIP_WAITING' });
+  }
+  var banner = document.getElementById('updateBanner');
+  if (banner) banner.classList.remove('show');
+}
+
+// SW will reload the page after activating — listen for that
+if ('serviceWorker' in navigator) {
+  var _swChecked = false;
+  navigator.serviceWorker.register('./sw.js').then(function (reg) {
+    // Check for updates on each page load
+    if (!_swChecked) {
+      _swChecked = true;
+      reg.update();
+    }
+
+    // If a new SW is already waiting, show banner immediately
+    if (reg.waiting) {
+      _pendingSW = reg.waiting;
+      showUpdateBanner();
+    }
+
+    // When a new SW is discovered
+    reg.addEventListener('updatefound', function () {
+      var newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', function () {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          _pendingSW = newWorker;
+          showUpdateBanner();
+        }
+      });
+    });
+
+    // After the waiting SW activates and takes over, reload the page
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      window.location.reload();
     });
 
     reg.addEventListener('updatefound', function() {

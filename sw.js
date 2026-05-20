@@ -1,4 +1,4 @@
-var CACHE_NAME = 'ledger-v5';
+var CACHE_NAME = 'ledger-v6';
 var ASSETS = [
   './',
   './index.html',
@@ -14,7 +14,14 @@ self.addEventListener('install', function(e) {
       return cache.addAll(ASSETS);
     })
   );
-  self.skipWaiting();
+  // Do NOT call skipWaiting here — wait for user to click "Update"
+});
+
+// Listen for SKIP_WAITING from page, then activate
+self.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', function(e) {
