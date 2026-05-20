@@ -758,24 +758,32 @@ body.rain-mode .rain-bg-layer,
 body.rain-mode #rainCanvas { display: block; }
 
 body.rain-mode .sidebar {
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(10px) saturate(120%);
-  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(4px) saturate(110%);
+  -webkit-backdrop-filter: blur(4px) saturate(110%);
+  border-right-color: rgba(255,255,255,0.06);
 }
 body.rain-mode .main { background: transparent; }
 body.rain-mode .content { background: transparent; }
 body.rain-mode .summary-card,
 body.rain-mode .section-card,
 body.rain-mode .ai-insight-card {
-  background: rgba(255,255,255,0.28);
-  backdrop-filter: blur(8px) saturate(120%);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(4px) saturate(110%);
+  -webkit-backdrop-filter: blur(4px) saturate(110%);
 }
-body.rain-mode .page-title { color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 body.rain-mode .topbar { color: #fff; }
-body.rain-mode .modal-overlay { background: rgba(0,0,0,0.55); }
+body.rain-mode .page-title { color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.45); }
+body.rain-mode .btn-primary {
+  background: rgba(0,113,227,0.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+body.rain-mode .btn-secondary { background: rgba(255,255,255,0.12); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); color: #fff; }
+body.rain-mode .modal-overlay { background: rgba(0,0,0,0.6); }
+body.rain-mode .week-stats-bar { background: rgba(255,255,255,0.10); }
 
-/* Rain toggle button */
+/* Rain toggle */
 .rain-toggle {
   display: flex;
   align-items: center;
@@ -796,75 +804,91 @@ body.rain-mode .modal-overlay { background: rgba(0,0,0,0.55); }
 .rain-toggle:hover { background: rgba(0,0,0,0.04); color: var(--text); }
 .rain-toggle .rain-toggle-icon { font-size: 16px; }
 body.rain-mode .rain-toggle {
-  background: rgba(100,160,220,0.2);
-  border-color: rgba(140,180,220,0.4);
-  color: #a0c0e0;
+  background: rgba(100,160,220,0.25);
+  border-color: rgba(140,180,220,0.5);
+  color: #b0d0f0;
 }
-body.rain-mode .sidebar-footer { color: rgba(255,255,255,0.55); border-top-color: rgba(255,255,255,0.1); }
-body.rain-mode .nav-item { color: rgba(255,255,255,0.65); }
-body.rain-mode .nav-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
+body.rain-mode .sidebar-footer { color: rgba(255,255,255,0.45); border-top-color: rgba(255,255,255,0.08); }
+body.rain-mode .nav-item { color: rgba(255,255,255,0.6); }
+body.rain-mode .nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
 body.rain-mode .nav-item.active { color: #fff; background: rgba(255,255,255,0.15); }
-body.rain-mode .summary-label { color: rgba(255,255,255,0.7); }
-body.rain-mode .summary-sub { color: rgba(255,255,255,0.5); }
+body.rain-mode .summary-label { color: rgba(255,255,255,0.75); }
+body.rain-mode .summary-sub { color: rgba(255,255,255,0.45); }
+body.rain-mode .summary-amount.balance { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.3); }
 body.rain-mode .section-title { color: rgba(255,255,255,0.9); }
 body.rain-mode .empty-state { color: rgba(255,255,255,0.55); }
 body.rain-mode .empty-title { color: rgba(255,255,255,0.8); }
-body.rain-mode .empty-desc { color: rgba(255,255,255,0.5); }
-body.rain-mode .txn-category { color: #222; }
-body.rain-mode .txn-note { color: #555; }
-body.rain-mode .txn-date { color: #888; }
-body.rain-mode .txn-item:hover { background: rgba(255,255,255,0.3); }
-body.rain-mode .txn-amount.income { color: #1a8a32; }
-body.rain-mode .txn-amount.expense { color: #d42a28; }
-body.rain-mode .btn-primary { background: rgba(0,113,227,0.85); }
-body.rain-mode .btn-secondary { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-body.rain-mode .form-input, body.rain-mode .form-select { color: #222; }
-body.rain-mode .type-btn.active { color: #222; }
-body.rain-mode .ai-insight-value { color: #222; }
-body.rain-mode .ai-insight-label { color: #555; }
-body.rain-mode .filter-chip { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.2); }
+body.rain-mode .empty-desc { color: rgba(255,255,255,0.45); }
+body.rain-mode .txn-category { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+body.rain-mode .txn-note { color: rgba(255,255,255,0.8); }
+body.rain-mode .txn-date { color: rgba(255,255,255,0.5); }
+body.rain-mode .txn-item:hover { background: rgba(255,255,255,0.12); }
+body.rain-mode .txn-amount.income { color: #4fdf80; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+body.rain-mode .txn-amount.expense { color: #ff6b60; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+body.rain-mode .form-input, body.rain-mode .form-select { color: #fff; background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.15); }
+body.rain-mode .type-btn.active { color: #fff; background: rgba(255,255,255,0.18); }
+body.rain-mode .ai-insight-value { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+body.rain-mode .ai-insight-label { color: rgba(255,255,255,0.7); }
+body.rain-mode .filter-chip { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
 body.rain-mode .filter-chip.active { background: var(--accent); color: #fff; }
-body.rain-mode .section-header { border-bottom-color: rgba(255,255,255,0.1); }
-body.rain-mode .txn-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.08); }
-body.rain-mode .budget-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.08); }
-body.rain-mode .ai-suggestion-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.08); }
+body.rain-mode .section-header { border-bottom-color: rgba(255,255,255,0.06); }
+body.rain-mode .txn-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.05); }
+body.rain-mode .budget-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.05); }
+body.rain-mode .ai-suggestion-item:not(:last-child) { border-bottom-color: rgba(255,255,255,0.05); }
+body.rain-mode .ai-suggestion-title { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+body.rain-mode .ai-suggestion-desc { color: rgba(255,255,255,0.75); }
+body.rain-mode .budget-bar-label { color: rgba(255,255,255,0.85); }
+body.rain-mode .budget-bar-name { color: #fff; }
+body.rain-mode .budget-bar-amount { color: rgba(255,255,255,0.7); }
+body.rain-mode .month-label { color: #fff; }
+body.rain-mode .ai-compare-label { color: rgba(255,255,255,0.7); }
+body.rain-mode .ai-compare-amount { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+body.rain-mode .filter-bar .filter-chip { background: rgba(255,255,255,0.10); }
+body.rain-mode .data-stats-grid .summary-label { color: rgba(255,255,255,0.75); }
+body.rain-mode .data-stats-grid .summary-amount { color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 
-@media (max-width: 768px) {
+/* iPhone 16 Pro (390×844) and other phones */
+@media (max-width: 430px) {
   body.rain-mode .sidebar {
-    background: rgba(255,255,255,0.18);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-bottom-color: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border-bottom-color: rgba(255,255,255,0.05);
   }
   body.rain-mode .summary-card,
   body.rain-mode .section-card,
   body.rain-mode .ai-insight-card {
-    background: rgba(255,255,255,0.22);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
   }
-  body.rain-mode .filter-chip { background: rgba(255,255,255,0.18); }
+  body.rain-mode .filter-chip { background: rgba(255,255,255,0.08); }
+  body.rain-mode .btn-primary {background: rgba(0,113,227,0.72);}
+  body.rain-mode .btn-secondary { background: rgba(255,255,255,0.10); }
 }
 
-/* ===== Update Banner (native-app-style) ===== */
+/* ===== Update Banner ===== */
 .update-banner {
   position: fixed;
-  bottom: 20px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(120px);
   z-index: 300;
-  background: #1d1d1f;
+  background: rgba(15,15,17,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   color: #fff;
   border-radius: 20px;
   padding: 16px 20px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 14px;
   font-weight: 500;
   transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  max-width: 90vw;
+  width: calc(100vw - 32px);
+  max-width: 400px;
 }
 .update-banner.show { transform: translateX(-50%) translateY(0); }
 .update-banner .update-banner-icon { font-size: 22px; }
@@ -887,15 +911,10 @@ body.rain-mode .ai-suggestion-item:not(:last-child) { border-bottom-color: rgba(
 }
 .update-banner .update-banner-btn:hover { background: #0077ed; }
 .update-banner .update-banner-btn:active { transform: scale(0.96); }
-.update-banner .update-banner-close {
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.35);
-  cursor: pointer;
-  font-size: 16px;
-  padding: 2px;
-  line-height: 1;
-  flex-shrink: 0;
+
+/* iPhone notch / Dynamic Island safe area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .update-banner { bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
 </style>
 </head>
@@ -2566,16 +2585,6 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', function () {
       window.location.reload();
     });
-
-    reg.addEventListener('updatefound', function() {
-      var newWorker = reg.installing;
-      if (!newWorker) return;
-      newWorker.addEventListener('statechange', function() {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          showToast('🔁 发现更新，关闭再打开即生效');
-        }
-      });
-    });
   }).catch(function(err) {
     console.log('SW failed:', err);
   });
@@ -2655,20 +2664,72 @@ if ('serviceWorker' in navigator) {
     rainAnimId = requestAnimationFrame(drawRain);
   }
 
-  // === YouTube audio ===
-  var rainAudio = null;
+  // === Web Audio rain noise ===
+  var audioCtx = null;
+  var rainGain = null;
+  var rainNoiseNodes = [];
 
   function startRainAudio() {
-    if (rainAudio) return;
-    rainAudio = document.createElement('iframe');
-    rainAudio.id = '__rainAudio';
-    rainAudio.style.cssText = 'position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;';
-    rainAudio.src = 'https://www.youtube.com/embed/n61ULEU8tQc?autoplay=1&mute=0&controls=0&loop=1&playlist=n61ULEU8tQc&enablejsapi=1&origin=' + encodeURIComponent(window.location.origin) + '&rel=0&showinfo=0';
-    document.body.appendChild(rainAudio);
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) { return; }
+
+    rainGain = audioCtx.createGain();
+    rainGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    rainGain.gain.linearRampToValueAtTime(0.35, audioCtx.currentTime + 0.8);
+    rainGain.connect(audioCtx.destination);
+
+    rainNoiseNodes = [];
+    // 4 parallel filtered-noise layers = rich rain texture
+    var layerConfigs = [
+      { bands: [[200, 600], [800, 2000]], gain: 0.35 },
+      { bands: [[100, 400], [600, 1500]], gain: 0.25 },
+      { bands: [[300, 800], [1500, 4000]], gain: 0.18 },
+      { bands: [[50, 300]],              gain: 0.30 }
+    ];
+
+    for (var li = 0; li < layerConfigs.length; li++) {
+      var cfg = layerConfigs[li];
+      var layerGain = audioCtx.createGain();
+      layerGain.gain.setValueAtTime(cfg.gain, audioCtx.currentTime);
+      layerGain.connect(rainGain);
+
+      for (var bi = 0; bi < cfg.bands.length; bi++) {
+        var band = cfg.bands[bi];
+        var bufferSize = 2 * audioCtx.sampleRate;
+        var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        var data = buffer.getChannelData(0);
+        for (var i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        var noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        noise.loop = true;
+
+        var bandpass = audioCtx.createBiquadFilter();
+        bandpass.type = 'bandpass';
+        var centerFreq = band[0] + (band[1] - band[0]) * 0.5;
+        bandpass.frequency.setValueAtTime(centerFreq, audioCtx.currentTime);
+        bandpass.Q.setValueAtTime(centerFreq / (band[1] - band[0]) * 0.6, audioCtx.currentTime);
+
+        noise.connect(bandpass);
+        bandpass.connect(layerGain);
+        noise.start();
+        rainNoiseNodes.push(noise);
+      }
+    }
   }
 
   function stopRainAudio() {
-    if (rainAudio) { rainAudio.remove(); rainAudio = null; }
+    if (rainGain) {
+      rainGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+      setTimeout(function() {
+        for (var i = 0; i < rainNoiseNodes.length; i++) { try { rainNoiseNodes[i].stop(); } catch(e) {} }
+        rainNoiseNodes = [];
+        if (audioCtx) { audioCtx.close(); audioCtx = null; rainGain = null; }
+      }, 350);
+    }
   }
 
   // === Toggle ===
