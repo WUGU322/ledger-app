@@ -727,9 +727,124 @@ body {
   .ai-summary-row { grid-template-columns: 1fr; }
   .txn-actions .btn-icon { width: 36px; height: 36px; font-size: 16px; opacity: 0.6; }
 }
+
+/* ===== Rain Atmosphere Background ===== */
+.rain-bg-layer {
+  position: fixed; inset: 0; z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 3s ease-in-out;
+  pointer-events: none;
+}
+.rain-bg-layer.active { opacity: 1; }
+.rain-bg-layer::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10,15,19,0.15) 0%, rgba(10,15,19,0.45) 60%, rgba(10,15,19,0.75) 100%);
+}
+#rainCanvas {
+  position: fixed; inset: 0; z-index: -1;
+  pointer-events: none;
+  display: none;
+}
+
+/* Rain mode — dim the app to let background show through */
+body.rain-mode {
+  background: transparent;
+}
+body.rain-mode .rain-bg-layer,
+body.rain-mode #rainCanvas { display: block; }
+
+body.rain-mode .sidebar {
+  background: rgba(255,255,255,0.58);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+body.rain-mode .main { background: transparent; }
+body.rain-mode .content { background: transparent; }
+body.rain-mode .summary-card,
+body.rain-mode .section-card,
+body.rain-mode .ai-insight-card {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+body.rain-mode .page-title { color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+body.rain-mode .topbar { color: #fff; }
+body.rain-mode .modal-overlay { background: rgba(0,0,0,0.5); }
+
+/* Rain toggle button */
+.rain-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  margin-top: 8px;
+  width: 100%;
+  justify-content: center;
+}
+.rain-toggle:hover { background: rgba(0,0,0,0.04); color: var(--text); }
+.rain-toggle .rain-toggle-icon { font-size: 16px; }
+body.rain-mode .rain-toggle {
+  background: rgba(100,160,220,0.2);
+  border-color: rgba(140,180,220,0.4);
+  color: #a0c0e0;
+}
+body.rain-mode .sidebar-footer { color: rgba(255,255,255,0.55); border-top-color: rgba(255,255,255,0.1); }
+body.rain-mode .nav-item { color: rgba(255,255,255,0.65); }
+body.rain-mode .nav-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
+body.rain-mode .nav-item.active { color: #fff; background: rgba(255,255,255,0.15); }
+body.rain-mode .summary-label { color: rgba(255,255,255,0.7); }
+body.rain-mode .summary-sub { color: rgba(255,255,255,0.5); }
+body.rain-mode .section-title { color: rgba(255,255,255,0.9); }
+body.rain-mode .empty-state { color: rgba(255,255,255,0.5); }
+body.rain-mode .txn-category { color: #222; }
+body.rain-mode .txn-note { color: #555; }
+body.rain-mode .txn-date { color: #888; }
+body.rain-mode .txn-item:hover { background: rgba(255,255,255,0.3); }
+body.rain-mode .txn-amount.income { color: #1a9e3a; }
+body.rain-mode .txn-amount.expense { color: #d93030; }
+body.rain-mode .btn-primary { background: rgba(0,113,227,0.85); }
+body.rain-mode .btn-secondary { background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+body.rain-mode .form-input, body.rain-mode .form-select { color: #222; }
+body.rain-mode .type-btn.active { color: #222; }
+body.rain-mode .ai-insight-value { color: #222; }
+body.rain-mode .ai-insight-label { color: #555; }
+
+@media (max-width: 768px) {
+  body.rain-mode .sidebar {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  body.rain-mode .summary-card,
+  body.rain-mode .section-card,
+  body.rain-mode .ai-insight-card {
+    background: rgba(255,255,255,0.55);
+  }
+}
 </style>
 </head>
 <body>
+
+<!-- Rain Atmosphere Background -->
+<div class="rain-bg-layer active" id="rainBg1"
+     style="background-image: url('https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=1920&q=60');"></div>
+<div class="rain-bg-layer" id="rainBg2"
+     style="background-image: url('https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=1920&q=60');"></div>
+<div class="rain-bg-layer" id="rainBg3"
+     style="background-image: url('https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=1920&q=60');"></div>
+<canvas id="rainCanvas"></canvas>
 
 <!-- Sidebar -->
 <aside class="sidebar">
@@ -757,7 +872,10 @@ body {
       <span class="nav-icon">&#128451;</span> 数据
     </button>
   </nav>
-  <div class="sidebar-footer">Ledger v5</div>
+  <div class="sidebar-footer">
+    <button class="rain-toggle" id="rainToggle" onclick="toggleRainMode()" title="雨景氛围"><span class="rain-toggle-icon">🌧</span> 雨景</button>
+    <div style="margin-top:2px;">Ledger v5</div>
+  </div>
 </aside>
 
 <!-- Main -->
@@ -2349,6 +2467,122 @@ if ('serviceWorker' in navigator) {
     console.log('SW failed:', err);
   });
 }
+</script>
+
+<!-- Rain Atmosphere JS -->
+<script>
+(function() {
+  // === Background carousel ===
+  var rainBgs = [
+    document.getElementById('rainBg1'),
+    document.getElementById('rainBg2'),
+    document.getElementById('rainBg3')
+  ];
+  var rainBgIdx = 0;
+  var rainBgTimer = null;
+
+  function startBgCarousel() {
+    if (rainBgTimer) return;
+    rainBgTimer = setInterval(function() {
+      rainBgs[rainBgIdx].classList.remove('active');
+      rainBgIdx = (rainBgIdx + 1) % rainBgs.length;
+      rainBgs[rainBgIdx].classList.add('active');
+    }, 9000);
+  }
+
+  function stopBgCarousel() {
+    clearInterval(rainBgTimer);
+    rainBgTimer = null;
+  }
+
+  // === Rain canvas ===
+  var rainCanvas = document.getElementById('rainCanvas');
+  var rainCtx = rainCanvas.getContext('2d');
+  var rainDrops = [];
+  var DROP_COUNT = 140;
+  var rainAnimId = null;
+
+  function initRainDrops() {
+    rainDrops = [];
+    for (var i = 0; i < DROP_COUNT; i++) {
+      rainDrops.push({
+        x: Math.random() * rainCanvas.width,
+        y: Math.random() * rainCanvas.height,
+        speed: 10 + Math.random() * 16,
+        length: 6 + Math.random() * 20,
+        opacity: 0.06 + Math.random() * 0.14
+      });
+    }
+  }
+
+  function resizeRainCanvas() {
+    rainCanvas.width = window.innerWidth;
+    rainCanvas.height = window.innerHeight;
+    initRainDrops();
+  }
+
+  function drawRain() {
+    rainCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+    rainCtx.strokeStyle = '#a0c8ee';
+    rainCtx.lineWidth = 1;
+    for (var i = 0; i < rainDrops.length; i++) {
+      var d = rainDrops[i];
+      rainCtx.beginPath();
+      rainCtx.globalAlpha = d.opacity;
+      rainCtx.moveTo(d.x, d.y);
+      rainCtx.lineTo(d.x - 0.6, d.y + d.length);
+      rainCtx.stroke();
+      rainCtx.globalAlpha = 1;
+      d.y += d.speed;
+      if (d.y > rainCanvas.height + d.length) {
+        d.y = -d.length;
+        d.x = Math.random() * rainCanvas.width;
+      }
+    }
+    rainAnimId = requestAnimationFrame(drawRain);
+  }
+
+  // === YouTube audio ===
+  var rainAudio = null;
+
+  function startRainAudio() {
+    if (rainAudio) return;
+    rainAudio = document.createElement('iframe');
+    rainAudio.id = '__rainAudio';
+    rainAudio.style.cssText = 'position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;';
+    rainAudio.src = 'https://www.youtube.com/embed/n61ULEU8tQc?autoplay=1&mute=0&controls=0&loop=1&playlist=n61ULEU8tQc&enablejsapi=1&origin=' + encodeURIComponent(window.location.origin) + '&rel=0&showinfo=0';
+    document.body.appendChild(rainAudio);
+  }
+
+  function stopRainAudio() {
+    if (rainAudio) { rainAudio.remove(); rainAudio = null; }
+  }
+
+  // === Toggle ===
+  window.toggleRainMode = function() {
+    var body = document.body;
+    var toggle = document.getElementById('rainToggle');
+    if (body.classList.contains('rain-mode')) {
+      body.classList.remove('rain-mode');
+      toggle.querySelector('.rain-toggle-icon').textContent = '🌧';
+      stopBgCarousel();
+      cancelAnimationFrame(rainAnimId);
+      stopRainAudio();
+    } else {
+      body.classList.add('rain-mode');
+      toggle.querySelector('.rain-toggle-icon').textContent = '☀';
+      resizeRainCanvas();
+      startBgCarousel();
+      drawRain();
+      startRainAudio();
+    }
+  };
+
+  // Listen for resize
+  window.addEventListener('resize', function() {
+    if (document.body.classList.contains('rain-mode')) resizeRainCanvas();
+  });
+})();
 </script>
 </body>
 </html>
