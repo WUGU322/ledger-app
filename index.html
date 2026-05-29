@@ -2536,8 +2536,6 @@ renderDashboard();
 </script>
 <!-- Service Worker -->
 <script>
-var _pendingSW = null;
-
 function showUpdateBanner() {
   var banner = document.getElementById('updateBanner');
   if (banner) banner.classList.add('show');
@@ -2545,46 +2543,40 @@ function showUpdateBanner() {
 
 // Called by the "立即更新" button
 function applyUpdate() {
-  if (_pendingSW) {
-    // Send skip-waiting command to the waiting SW
-    _pendingSW.postMessage({ type: 'SKIP_WAITING' });
-  }
-  var banner = document.getElementById('updateBanner');
-  if (banner) banner.classList.remove('show');
+  window.location.reload();
 }
 
-// SW will reload the page after activating — listen for that
 if ('serviceWorker' in navigator) {
-  var _swChecked = false;
-  navigator.serviceWorker.register('./sw.js').then(function (reg) {
-    // Check for updates on each page load
-    if (!_swChecked) {
-      _swChecked = true;
-      reg.update();
-    }
+  navigator.serviceWorker.register('./sw.js').then(function(reg) {
+    var _checking = false;
 
-    // If a new SW is already waiting, show banner immediately
-    if (reg.waiting) {
-      _pendingSW = reg.waiting;
-      showUpdateBanner();
-    }
-
-    // When a new SW is discovered
-    reg.addEventListener('updatefound', function () {
-      var newWorker = reg.installing;
-      if (!newWorker) return;
-      newWorker.addEventListener('statechange', function () {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          _pendingSW = newWorker;
-          showUpdateBanner();
-        }
+    function checkForUpdate() {
+      if (_checking) return;
+      _checking = true;
+      reg.update().then(function() {
+        _checking = false;
+      }).catch(function() {
+        _checking = false;
       });
+    }
+
+    // Check immediately on load
+    checkForUpdate();
+
+    // Check every time the app comes to foreground (crucial for iOS PWA)
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) checkForUpdate();
     });
 
-    // After the waiting SW activates and takes over, reload the page
-    navigator.serviceWorker.addEventListener('controllerchange', function () {
-      window.location.reload();
-    });
+    // Also check every 5 minutes while open
+    setInterval(checkForUpdate, 300000);
+
+    // SW sends NEW_VERSION after activating via skipWaiting
+    navigator.serviceWorker.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'NEW_VERSION') {
+        showUpdateBanner();
+      }
+      });
   }).catch(function(err) {
     console.log('SW failed:', err);
   });

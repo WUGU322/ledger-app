@@ -1,4 +1,4 @@
-var CACHE_NAME = 'ledger-v6';
+var CACHE_NAME = 'ledger-v7';
 var ASSETS = [
   './',
   './index.html',
@@ -14,14 +14,8 @@ self.addEventListener('install', function(e) {
       return cache.addAll(ASSETS);
     })
   );
-  // Do NOT call skipWaiting here — wait for user to click "Update"
-});
-
-// Listen for SKIP_WAITING from page, then activate
-self.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  // Activate immediately — don't wait for tabs to close
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', function(e) {
@@ -34,7 +28,7 @@ self.addEventListener('activate', function(e) {
     }).then(function() {
       return self.clients.matchAll().then(function(clients) {
         clients.forEach(function(client) {
-          client.postMessage({ type: 'SW_UPDATED' });
+          client.postMessage({ type: 'NEW_VERSION' });
         });
       });
     })
@@ -43,7 +37,7 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-  // Network-first for HTML — always try network, fallback to cache
+  // Network-first for HTML
   if (e.request.destination === 'document' || e.request.url.endsWith('/') || e.request.url.endsWith('.html')) {
     e.respondWith(
       fetch(e.request).then(function(response) {
